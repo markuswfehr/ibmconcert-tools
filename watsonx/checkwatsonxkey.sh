@@ -8,6 +8,7 @@
 
 # --- Resolve env file and API key ---
 ENV_FILE=""
+CLI_API_KEY=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -20,7 +21,7 @@ while [[ $# -gt 0 ]]; do
       exit 1
       ;;
     *)
-      WATSONX_API_KEY="$1"
+      CLI_API_KEY="$1"
       shift
       ;;
   esac
@@ -33,9 +34,13 @@ if [[ -n "$ENV_FILE" ]]; then
   fi
   # shellcheck source=/dev/null
   source "$ENV_FILE"
- elif [[ -f ".watsonx.env" ]]; then
-   # shellcheck source=/dev/null
-   source ".watsonx.env"
+elif [[ -z "$CLI_API_KEY" && -f ".watsonx.env" ]]; then
+  # shellcheck source=/dev/null
+  source ".watsonx.env"
+fi
+
+if [[ -n "$CLI_API_KEY" ]]; then
+  WATSONX_API_KEY="$CLI_API_KEY"
 fi
 
 if [[ -z "${WATSONX_API_KEY}" ]]; then
@@ -88,12 +93,12 @@ PROJECTS=$(curl -s \
 -H "Authorization: Bearer $IAM_TOKEN" \
 "https://api.dataplatform.cloud.ibm.com/v2/projects?limit=100")
 
-TOTAL=$(echo "$PROJECTS" | jq -r '.total_results')
+TOTAL=$(echo "$PROJECTS" | jq -r '.total_results // 0')
 echo "Projects found: $TOTAL"
 echo ""
 
 echo "$PROJECTS" | jq -r --arg api_key "$API_KEY" '
-  .resources[] |
+  (.resources // [])[] |
   "Project ID:  \(.metadata.guid)",
   "Name:        \(.entity.name)",
   "Description: \(.entity.description)",
