@@ -36,6 +36,7 @@ if [[ -n "$ENV_FILE" ]]; then
   source "$ENV_FILE"
 elif [[ -z "$CLI_API_KEY" && -f ".watsonx.env" ]]; then
   # shellcheck source=/dev/null
+  echo "Watsonx API key sourced from .watsonx.env" >&2
   source ".watsonx.env"
 fi
 
@@ -60,9 +61,7 @@ API_KEY="${WATSONX_API_KEY}"
 # part 1 - check if the API Key is found
 #
 
-echo ""
 echo "Watsonx API Key validation"
-echo ""
 
 RESPONSE=$(curl -s -X POST \
 https://iam.cloud.ibm.com/identity/token \
